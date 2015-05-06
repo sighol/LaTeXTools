@@ -1,5 +1,5 @@
 # ST2/ST3 compat
-from __future__ import print_function 
+from __future__ import print_function
 import sublime
 if sublime.version() < '3000':
     # we are on ST2 and Python 2.X
@@ -16,12 +16,12 @@ import codecs
 DEBUG = False
 
 DEFAULT_COMMAND_LATEXMK = ["latexmk", "-cd",
-				"-e", "$pdflatex = '%E -interaction=nonstopmode -synctex=1 %S %O'",
+				"-e", "$pdflatex = '%E -interaction=nonstopmode -shell-escape -synctex=1 %S %O'",
 				"-f", "-pdf"]
 
-DEFAULT_COMMAND_WINDOWS_MIKTEX = ["texify", 
+DEFAULT_COMMAND_WINDOWS_MIKTEX = ["texify",
 					"-b", "-p", "--engine=%E",
-					"--tex-option=\"--synctex=1\""]
+					"--tex-option=\"--synctex=1\"", "--tex-option=\"--shell-escape\""]
 
 
 #----------------------------------------------------------------
@@ -34,7 +34,7 @@ class TraditionalBuilder(PdfBuilder):
 
 	def __init__(self, tex_root, output, builder_settings, platform_settings):
 		# Sets the file name parts, plus internal stuff
-		super(TraditionalBuilder, self).__init__(tex_root, output, builder_settings, platform_settings) 
+		super(TraditionalBuilder, self).__init__(tex_root, output, builder_settings, platform_settings)
 		# Now do our own initialization: set our name
 		self.name = "Traditional Builder"
 		# Display output?
@@ -90,7 +90,7 @@ class TraditionalBuilder(PdfBuilder):
 						  sublime.error_message("You are using a custom build command.\n"\
 							  "Cannot select engine using a %!TEX program directive.\n")
 						  yield("", "Could not compile.")
-					
+
 					break
 
 		if cmd[0] == "texify":
@@ -98,16 +98,16 @@ class TraditionalBuilder(PdfBuilder):
 
 		if engine != self.engine:
 			self.display("Engine: " + self.engine + " -> " + engine + ". ")
-			
+
 		cmd[3] = cmd[3].replace("%E", engine)
 
 		# texify wants the .tex extension; latexmk doesn't care either way
 		yield (cmd + [self.tex_name], "Invoking " + cmd[0] + "... ")
 
 		self.display("done.\n")
-		
-		# This is for debugging purposes 
+
+		# This is for debugging purposes
 		if self.display_log:
 			self.display("\nCommand results:\n")
 			self.display(self.out)
-			self.display("\n\n")	
+			self.display("\n\n")
