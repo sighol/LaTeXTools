@@ -1,5 +1,5 @@
 # ST2/ST3 compat
-from __future__ import print_function 
+from __future__ import print_function
 import sublime
 if sublime.version() < '3000':
     # we are on ST2 and Python 2.X
@@ -56,19 +56,19 @@ class jump_to_pdfCommand(sublime_plugin.TextCommand):
 
 		# Query view settings to see if we need to keep focus or let the PDF viewer grab it
 		# By default, we respect settings in Preferences
-		
+
 
 		# platform-specific code:
 		plat = sublime_plugin.sys.platform
 		if plat == 'darwin':
-			options = ["-r","-g"] if keep_focus else ["-r"]		
+			options = ["-r","-g"] if keep_focus else ["-r"]
 			if forward_sync:
 				path_to_skim = '/Applications/Skim.app/'
 				if not os.path.exists(path_to_skim):
 					path_to_skim = subprocess.check_output(
 						['osascript', '-e', 'POSIX path of (path to app id "net.sourceforge.skim-app.skim")']
 					).decode("utf8")[:-1]
-				subprocess.Popen([os.path.join(path_to_skim, "Contents/SharedSupport/displayline")] + 
+				subprocess.Popen([os.path.join(path_to_skim, "Contents/SharedSupport/displayline")] +
 								  options + [str(line), pdffile, srcfile])
 			else:
 				skim = os.path.join(sublime.packages_path(),
@@ -91,7 +91,7 @@ class jump_to_pdfCommand(sublime_plugin.TextCommand):
 			# 	self.view.window().run_command("view_pdf")
 			# 	time.sleep(0.5) # wait 1/2 seconds so Sumatra comes up
 			setfocus = 0 if keep_focus else 1
-			# First send an open command forcing reload, or ForwardSearch won't 
+			# First send an open command forcing reload, or ForwardSearch won't
 			# reload if the file is on a network share
 			# command = u'[Open(\"%s\",0,%d,1)]' % (pdffile,setfocus)
 			# print (repr(command))
@@ -122,39 +122,11 @@ class jump_to_pdfCommand(sublime_plugin.TextCommand):
 				# self.view.run_command("send_dde",
 				# 		{ "service": "SUMATRA", "topic": "control", "command": command})
 
-		
+
 		elif 'linux' in plat: # for some reason, I get 'linux2' from sys.platform
 			print ("Linux!")
-			
-			# the required scripts are in the 'evince' subdir
-			ev_path = os.path.join(sublime.packages_path(), 'LaTeXTools', 'evince')
-			ev_fwd_exec = os.path.join(ev_path, 'evince_forward_search')
-			ev_sync_exec = os.path.join(ev_path, 'evince_sync') # for inverse search!
-			#print ev_fwd_exec, ev_sync_exec
-			
-			# Run evince if either it's not running, or if focus PDF was toggled
-			# Sadly ST2 has Python <2.7, so no check_output:
-			running_apps = subprocess.Popen(['ps', 'xw'], stdout=subprocess.PIPE).communicate()[0]
-			# If there are non-ascii chars in the output just captured, we will fail.
-			# Thus, decode using the 'ignore' option to simply drop them---we don't need them
-			running_apps = running_apps.decode(sublime_plugin.sys.getdefaultencoding(), 'ignore')
-			
-			# Run scripts through sh because the script files will lose their exec bit on github
 
-			# Get python binary if set:
-			py_binary = prefs_lin["python2"] or 'python'
-			sb_binary = prefs_lin["sublime"] or 'sublime-text'
-			# How long we should wait after launching sh before syncing
-			sync_wait = prefs_lin["sync_wait"] or 1.0
+			subprocess.Popen(["okular", "--unique", "%s#src:%d%s" % (pdffile, line, srcfile)])
 
-			evince_running = ("evince " + pdffile in running_apps)
-			if (not keep_focus) or (not evince_running):
-				print ("(Re)launching evince")
-				subprocess.Popen(['sh', ev_sync_exec, py_binary, sb_binary, pdffile], cwd=ev_path)
-				print ("launched evince_sync")
-				if not evince_running: # Don't wait if we have already shown the PDF
-					time.sleep(sync_wait)
-			if forward_sync:
-				subprocess.Popen([py_binary, ev_fwd_exec, pdffile, str(line), srcfile])
 		else: # ???
 			pass
